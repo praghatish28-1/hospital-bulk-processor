@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: hospital-bulk-api
+    runtime: docker
+    plan: starter
+    dockerCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: HOSPITAL_API_URL
+        value: https://hospital-directory.onrender.com
+      - key: MAX_HOSPITALS_PER_CSV
+        value: "20"
+      - key: HTTP_TIMEOUT
+        value: "10.0"
+      - key: MAX_RETRIES
+        value: "3"
+
+  - type: worker
+    name: hospital-bulk-worker
+    runtime: docker
+    plan: starter
+    dockerCommand: celery -A app.worker.celery_app worker -Q orchestration,hospital_creation,activation --loglevel=INFO
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: HOSPITAL_API_URL
+        value: https://hospital-directory.onrender.com
+      - key: MAX_HOSPITALS_PER_CSV
+        value: "20"
+      - key: HTTP_TIMEOUT
+        value: "10.0"
+      - key: MAX_RETRIES
+        value: "3"
+
+  - type: web
+    name: hospital-bulk-flower
+    runtime: docker
+    plan: starter
+    dockerCommand: celery -A app.worker.celery_app flower --port=$PORT
+    envVars:
+      - key: REDIS_URL
+        sync: false
+      - key: HOSPITAL_API_URL
+        value: https://hospital-directory.onrender.com
+
