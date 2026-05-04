@@ -4,6 +4,7 @@ from typing import Annotated, Any
 
 import structlog
 from fastapi import Depends, FastAPI
+from fastapi.responses import RedirectResponse
 
 from app.core.redis import close_redis, get_async_redis, init_redis
 from app.routers.bulk import router as bulk_router
@@ -50,4 +51,9 @@ async def health(redis: Annotated[Any, Depends(get_async_redis)]) -> dict[str, s
     """Report Redis and Celery health for deployment probes."""
 
     return await health_check(redis)
+
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/docs")
 
